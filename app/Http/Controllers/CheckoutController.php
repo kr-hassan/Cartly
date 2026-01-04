@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OrderConfirmation;
 use App\Models\ShippingSetting;
+use App\Models\TaxSetting;
 
 class CheckoutController extends Controller
 {
@@ -47,7 +48,17 @@ class CheckoutController extends Controller
             return ShippingSetting::active()->ordered()->get();
         });
         
-        return view('checkout.index', compact('cartTotals', 'user', 'shippingSettings'));
+        // Get tax rate for frontend
+        $taxRate = cache()->remember('tax_rate', 3600, function () {
+            return TaxSetting::getTaxRatePercentage();
+        });
+        
+        // Get free shipping threshold
+        $freeShippingThreshold = cache()->remember('free_shipping_threshold', 3600, function () {
+            return TaxSetting::getFreeShippingThreshold();
+        });
+        
+        return view('checkout.index', compact('cartTotals', 'user', 'shippingSettings', 'taxRate', 'freeShippingThreshold'));
     }
 
     /**
@@ -110,14 +121,29 @@ class CheckoutController extends Controller
     {
         $request->validate([
             'district' => 'required|string',
+            'subtotal' => 'nullable|numeric|min:0',
+            'discount' => 'nullable|numeric|min:0',
         ]);
 
-        $shippingCost = ShippingSetting::getShippingCost($request->district);
+        $subtotal = $request->subtotal ?? 0;
+        $discount = $request->discount ?? 0;
+        $orderAmount = $subtotal - $discount;
+
+        // Check if order qualifies for free shipping
+        $freeShipping = TaxSetting::qualifiesForFreeShipping($orderAmount);
+        
+        if ($freeShipping) {
+            $shippingCost = 0;
+        } else {
+            $shippingCost = ShippingSetting::getShippingCost($request->district);
+        }
 
         return response()->json([
             'success' => true,
             'shipping_cost' => (float) $shippingCost,
             'shipping_cost_formatted' => number_format($shippingCost, 2),
+            'free_shipping' => $freeShipping,
+            'free_shipping_threshold' => TaxSetting::getFreeShippingThreshold(),
         ]);
     }
 

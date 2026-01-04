@@ -9,7 +9,7 @@
         <p class="text-gray-600">Complete your order with secure checkout</p>
     </div>
 
-    <form action="{{ route('checkout.store') }}" method="POST" class="grid grid-cols-1 lg:grid-cols-3 gap-8" x-data="checkoutCoupon({{ $cartTotals['subtotal'] }}, '{{ route('checkout.validate-coupon') }}', '{{ route('checkout.calculate-shipping') }}')">
+    <form action="{{ route('checkout.store') }}" method="POST" class="grid grid-cols-1 lg:grid-cols-3 gap-8" x-data="checkoutCoupon({{ $cartTotals['subtotal'] }}, '{{ route('checkout.validate-coupon') }}', '{{ route('checkout.calculate-shipping') }}', {{ $taxRate }}, {{ $freeShippingThreshold ? $freeShippingThreshold : 'null' }})">
         @csrf
 
         <!-- Checkout Form -->
@@ -253,12 +253,16 @@
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-600">Shipping</span>
                         <span class="font-semibold text-gray-900">
-                            <span x-show="!shippingCalculated || shippingCost == 0">৳0.00</span>
-                            <span x-show="shippingCalculated && shippingCost > 0">৳<span x-text="getShippingCost().toFixed(2)"></span></span>
+                            <span x-show="freeShipping" class="text-green-600">Free</span>
+                            <span x-show="!freeShipping && (!shippingCalculated || shippingCost == 0)">৳0.00</span>
+                            <span x-show="!freeShipping && shippingCalculated && shippingCost > 0">৳<span x-text="getShippingCost().toFixed(2)"></span></span>
                         </span>
                     </div>
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-600">Tax (10%)</span>
+                    <div x-show="freeShippingThreshold && !freeShipping" class="text-xs text-gray-500 mt-1">
+                        Add ৳<span x-text="(freeShippingThreshold - (subtotal - (couponApplied ? discount : 0))).toFixed(2)"></span> more for free shipping!
+                    </div>
+                    <div class="flex justify-between text-sm" x-show="getTaxRateDisplay() > 0">
+                        <span class="text-gray-600">Tax (<span x-text="getTaxRateDisplay().toFixed(2)"></span>%)</span>
                         <span class="font-semibold text-gray-900">৳<span x-text="getTax()"></span></span>
                     </div>
                 </div>

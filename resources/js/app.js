@@ -146,12 +146,16 @@ Alpine.data('checkoutCoupon', (subtotal, validateUrl, shippingUrl) => ({
         if (!districtSelect || !districtSelect.value) {
             this.shippingCost = 0;
             this.shippingCalculated = false;
+            this.freeShipping = false;
             return;
         }
         
         try {
             const csrfToken = document.querySelector('meta[name="csrf-token"]');
             if (!csrfToken) return;
+            
+            const subtotalAmount = parseFloat(this.subtotal);
+            const discountAmount = this.couponApplied ? parseFloat(this.discount) : 0;
             
             const response = await fetch(shippingUrl, {
                 method: 'POST',
@@ -161,7 +165,11 @@ Alpine.data('checkoutCoupon', (subtotal, validateUrl, shippingUrl) => ({
                     'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json'
                 },
-                body: JSON.stringify({ district: districtSelect.value })
+                body: JSON.stringify({ 
+                    district: districtSelect.value,
+                    subtotal: subtotalAmount,
+                    discount: discountAmount
+                })
             });
             
             if (!response.ok) {
@@ -171,12 +179,32 @@ Alpine.data('checkoutCoupon', (subtotal, validateUrl, shippingUrl) => ({
             const data = await response.json();
             if (data.success) {
                 this.shippingCost = parseFloat(data.shipping_cost) || 0;
+                this.freeShipping = data.free_shipping || false;
                 this.shippingCalculated = true;
             }
         } catch (error) {
             console.error('Shipping calculation error:', error);
             this.shippingCost = 0;
             this.shippingCalculated = false;
+            this.freeShipping = false;
+        }
+    },
+    
+    checkFreeShipping() {
+        // Check if order qualifies for free shipping when discount changes
+        if (this.freeShippingThreshold !== null) {
+            const subtotalAmount = parseFloat(this.subtotal);
+            const discountAmount = this.couponApplied ? parseFloat(this.discount) : 0;
+            const orderAmount = subtotalAmount - discountAmount;
+            
+            if (orderAmount >= this.freeShippingThreshold) {
+                this.freeShipping = true;
+                this.shippingCost = 0;
+                this.shippingCalculated = true;
+            } else if (this.freeShipping) {
+                // Recalculate shipping if no longer qualifies
+                this.calculateShippingCost();
+            }
         }
     },
     
@@ -231,6 +259,8 @@ Alpine.data('checkoutCoupon', (subtotal, validateUrl, shippingUrl) => ({
             this.discount = 0;
         } finally {
             this.loading = false;
+            // Check free shipping after coupon is applied
+            this.checkFreeShipping();
         }
     },
     
@@ -239,13 +269,16 @@ Alpine.data('checkoutCoupon', (subtotal, validateUrl, shippingUrl) => ({
         this.discount = 0;
         this.couponApplied = false;
         this.error = '';
+        // Check free shipping after coupon is removed
+        this.checkFreeShipping();
     },
     
     getTotal() {
         const discountAmount = this.couponApplied ? parseFloat(this.discount) : 0;
         const shipping = parseFloat(this.shippingCost) || 0;
         const subtotalAmount = parseFloat(this.subtotal);
-        const tax = (subtotalAmount - discountAmount + shipping) * 0.1; // 10% tax
+        const taxRateDecimal = (parseFloat(this.taxRate) || 0) / 100; // Convert percentage to decimal
+        const tax = (subtotalAmount - discountAmount + shipping) * taxRateDecimal;
         const total = subtotalAmount - discountAmount + shipping + tax;
         return total.toFixed(2);
     },
@@ -258,7 +291,12 @@ Alpine.data('checkoutCoupon', (subtotal, validateUrl, shippingUrl) => ({
         const discountAmount = this.couponApplied ? parseFloat(this.discount) : 0;
         const shipping = parseFloat(this.shippingCost) || 0;
         const subtotalAmount = parseFloat(this.subtotal);
-        return ((subtotalAmount - discountAmount + shipping) * 0.1).toFixed(2);
+        const taxRateDecimal = (parseFloat(this.taxRate) || 0) / 100; // Convert percentage to decimal
+        return ((subtotalAmount - discountAmount + shipping) * taxRateDecimal).toFixed(2);
+    },
+    
+    getTaxRateDisplay() {
+        return parseFloat(this.taxRate) || 0;
     }
 }));
 

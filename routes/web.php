@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\ShippingSettingController;
+use App\Http\Controllers\Admin\TaxSettingController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -178,4 +179,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     
     // Shipping Settings
     Route::resource('shipping-settings', ShippingSettingController::class);
+    
+    // Tax Settings
+    Route::get('tax-settings/edit', [TaxSettingController::class, 'edit'])->name('tax-settings.edit');
+    Route::put('tax-settings', [TaxSettingController::class, 'update'])->name('tax-settings.update');
 });

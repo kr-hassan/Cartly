@@ -7,6 +7,7 @@ use App\Models\OrderItem;
 use App\Models\OrderStatusHistory;
 use App\Models\Coupon;
 use App\Models\ShippingSetting;
+use App\Models\TaxSetting;
 use App\Services\CartService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -43,18 +44,26 @@ class OrderService
 
         // Calculate shipping cost based on district
         $shippingCost = 0;
-        if (!empty($data['shipping_district'])) {
-            $shippingCost = ShippingSetting::getShippingCost($data['shipping_district']);
-        } elseif (!empty($data['shipping_city'])) {
-            $shippingCost = ShippingSetting::getShippingCost($data['shipping_city']);
-        } else {
-            // Default shipping cost
-            $shippingCost = ShippingSetting::getShippingCost('Outside Dhaka');
+        $subtotal = $cartTotals['subtotal'];
+        $orderAmountForShipping = $subtotal - $discount; // Order amount for free shipping check (subtotal - discount)
+        
+        // Check if order qualifies for free shipping
+        if (!TaxSetting::qualifiesForFreeShipping($orderAmountForShipping)) {
+            if (!empty($data['shipping_district'])) {
+                $shippingCost = ShippingSetting::getShippingCost($data['shipping_district']);
+            } elseif (!empty($data['shipping_city'])) {
+                $shippingCost = ShippingSetting::getShippingCost($data['shipping_city']);
+            } else {
+                // Default shipping cost
+                $shippingCost = ShippingSetting::getShippingCost('Outside Dhaka');
+            }
         }
+        // If qualifies for free shipping, $shippingCost remains 0
 
         // Calculate totals
         $subtotal = $cartTotals['subtotal'];
-        $tax = ($subtotal - $discount + $shippingCost) * 0.1; // 10% tax (can be configurable)
+        $taxRate = TaxSetting::getTaxRate(); // Get dynamic tax rate (as decimal, e.g., 0.10 for 10%)
+        $tax = ($subtotal - $discount + $shippingCost) * $taxRate;
         $total = $subtotal - $discount + $shippingCost + $tax;
 
         DB::beginTransaction();
