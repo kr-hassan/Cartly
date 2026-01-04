@@ -1,0 +1,133 @@
+@extends('layouts.admin')
+
+@section('page-title', 'Order ' . $order->order_number)
+
+@section('content')
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold">Order #{{ $order->order_number }}</h1>
+                    <p class="text-gray-600">Placed on {{ $order->created_at->format('F d, Y h:i A') }}</p>
+                </div>
+                <span class="px-3 py-1 text-sm font-semibold rounded-full 
+                    {{ $order->status === 'completed' ? 'bg-green-100 text-green-800' : '' }}
+                    {{ $order->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : '' }}
+                    {{ $order->status === 'processing' ? 'bg-blue-100 text-blue-800' : '' }}
+                    {{ $order->status === 'shipped' ? 'bg-purple-100 text-purple-800' : '' }}
+                    {{ $order->status === 'cancelled' ? 'bg-red-100 text-red-800' : '' }}">
+                    {{ ucfirst($order->status) }}
+                </span>
+            </div>
+
+            <h2 class="text-xl font-bold mb-4">Order Items</h2>
+            <div class="space-y-4">
+                @foreach($order->items as $item)
+                    <div class="flex justify-between border-b pb-4">
+                        <div>
+                            <h3 class="font-semibold">{{ $item->product_name }}</h3>
+                            <p class="text-sm text-gray-600">Qty: {{ $item->quantity }} × ${{ number_format($item->price, 2) }}</p>
+                        </div>
+                        <div class="text-right font-semibold">
+                            ${{ number_format($item->total, 2) }}
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            <div class="mt-6 pt-6 border-t">
+                <div class="flex justify-end">
+                    <div class="w-64 space-y-2">
+                        <div class="flex justify-between">
+                            <span>Subtotal:</span>
+                            <span>${{ number_format($order->subtotal, 2) }}</span>
+                        </div>
+                        @if($order->discount > 0)
+                            <div class="flex justify-between text-red-600">
+                                <span>Discount:</span>
+                                <span>-${{ number_format($order->discount, 2) }}</span>
+                            </div>
+                        @endif
+                        @if($order->shipping_cost > 0)
+                            <div class="flex justify-between">
+                                <span>Shipping:</span>
+                                <span>${{ number_format($order->shipping_cost, 2) }}</span>
+                            </div>
+                        @endif
+                        @if($order->tax > 0)
+                            <div class="flex justify-between">
+                                <span>Tax:</span>
+                                <span>${{ number_format($order->tax, 2) }}</span>
+                            </div>
+                        @endif
+                        <div class="flex justify-between font-bold text-lg pt-2 border-t">
+                            <span>Total:</span>
+                            <span>${{ number_format($order->total, 2) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-bold mb-4">Shipping Information</h2>
+            <div class="space-y-2">
+                <p><strong>Name:</strong> {{ $order->customer_name }}</p>
+                <p><strong>Email:</strong> {{ $order->customer_email ?? 'N/A' }}</p>
+                <p><strong>Phone:</strong> {{ $order->customer_phone }}</p>
+                <p><strong>Address:</strong> {{ $order->shipping_address }}</p>
+                @if($order->shipping_city)
+                    <p>{{ $order->shipping_city }}{{ $order->shipping_postal_code ? ', ' . $order->shipping_postal_code : '' }}</p>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow p-6 sticky top-4">
+            <h2 class="text-xl font-bold mb-4">Update Status</h2>
+            <form action="{{ route('admin.orders.update-status', $order) }}" method="POST">
+                @csrf
+                @method('PUT')
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select name="status" required class="w-full border border-gray-300 rounded-md px-3 py-2">
+                        <option value="pending" {{ $order->status == 'pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="processing" {{ $order->status == 'processing' ? 'selected' : '' }}>Processing</option>
+                        <option value="shipped" {{ $order->status == 'shipped' ? 'selected' : '' }}>Shipped</option>
+                        <option value="completed" {{ $order->status == 'completed' ? 'selected' : '' }}>Completed</option>
+                        <option value="cancelled" {{ $order->status == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                    <textarea name="notes" rows="4" class="w-full border border-gray-300 rounded-md px-3 py-2"></textarea>
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    Update Status
+                </button>
+            </form>
+
+            <div class="mt-6 pt-6 border-t">
+                <h3 class="font-semibold mb-3">Status History</h3>
+                <div class="space-y-2 text-sm">
+                    @foreach($order->statusHistory as $history)
+                        <div>
+                            <div class="font-medium">{{ ucfirst($history->status) }}</div>
+                            <div class="text-gray-600">{{ $history->created_at->format('M d, Y h:i A') }}</div>
+                            @if($history->notes)
+                                <div class="text-gray-500 italic">{{ $history->notes }}</div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
