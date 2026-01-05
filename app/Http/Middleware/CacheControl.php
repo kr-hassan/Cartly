@@ -17,14 +17,28 @@ class CacheControl
     {
         $response = $next($request);
 
-        // Add cache headers for static assets and public pages
-        if ($request->is('products*') || $request->is('/')) {
-            $response->headers->set('Cache-Control', 'public, max-age=300, s-maxage=300');
-        } elseif ($request->is('assets/*') || $request->is('build/*')) {
+        // Don't cache pages if user is authenticated (authentication state changes)
+        if (auth()->check()) {
+            // For authenticated users, prevent caching to ensure fresh auth state
+            if ($request->is('products*') || $request->is('/')) {
+                $response->headers->set('Cache-Control', 'no-cache, no-store, must-revalidate, private');
+                $response->headers->set('Pragma', 'no-cache');
+                $response->headers->set('Expires', '0');
+            }
+        } else {
+            // For guest users, cache public pages
+            if ($request->is('products*') || $request->is('/')) {
+                $response->headers->set('Cache-Control', 'public, max-age=300, s-maxage=300');
+            }
+        }
+
+        // Always cache static assets
+        if ($request->is('assets/*') || $request->is('build/*')) {
             $response->headers->set('Cache-Control', 'public, max-age=31536000, immutable');
         }
 
         return $response;
     }
 }
+
 

@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\ShippingSettingController;
 use App\Http\Controllers\Admin\TaxSettingController;
+use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -155,6 +156,25 @@ Route::post('/checkout/calculate-shipping', [CheckoutController::class, 'calcula
 Route::get('/orders', [OrderController::class, 'index'])->name('orders.index')->middleware('auth');
 Route::get('/orders/{orderNumber}', [OrderController::class, 'show'])->name('orders.show');
 
+// Wishlist Routes
+Route::get('/wishlist', [\App\Http\Controllers\WishlistController::class, 'index'])->name('wishlist.index')->middleware('auth');
+Route::post('/wishlist', [\App\Http\Controllers\WishlistController::class, 'store'])->name('wishlist.store');
+Route::delete('/wishlist/{id}', [\App\Http\Controllers\WishlistController::class, 'destroy'])->name('wishlist.destroy');
+Route::post('/wishlist/check', [\App\Http\Controllers\WishlistController::class, 'check'])->name('wishlist.check');
+Route::get('/wishlist/count', [\App\Http\Controllers\WishlistController::class, 'count'])->name('wishlist.count');
+
+// User Auth Check (for Alpine.js)
+Route::get('/user/check-auth', function () {
+    return response()->json(['logged_in' => Auth::check()]);
+})->name('user.check-auth');
+
+// Notifications Routes
+Route::middleware(['auth'])->group(function () {
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+});
+
 // Admin Routes
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -183,4 +203,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Tax Settings
     Route::get('tax-settings/edit', [TaxSettingController::class, 'edit'])->name('tax-settings.edit');
     Route::put('tax-settings', [TaxSettingController::class, 'update'])->name('tax-settings.update');
+    
+    // Admin Notifications Routes
+    Route::post('notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
 });

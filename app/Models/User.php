@@ -65,6 +65,23 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the wishlist items for the user.
+     */
+    public function wishlistItems()
+    {
+        return $this->hasMany(\App\Models\Wishlist::class);
+    }
+
+    /**
+     * Get the products in the user's wishlist.
+     */
+    public function wishlistProducts()
+    {
+        return $this->belongsToMany(Product::class, 'wishlists')
+            ->withTimestamps();
+    }
+
+    /**
      * Check if user is admin.
      */
     public function isAdmin(): bool

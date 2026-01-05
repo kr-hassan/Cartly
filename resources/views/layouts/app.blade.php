@@ -32,7 +32,7 @@
     </div>
 
     <!-- Navigation -->
-    <nav class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
+    <nav class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50 relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Main Nav -->
             <div class="flex justify-between items-center h-16">
@@ -62,6 +62,21 @@
 
                 <!-- Right Menu -->
                 <div class="flex items-center space-x-4">
+                    @auth
+                        <!-- Wishlist Icon -->
+                        <a href="{{ route('wishlist.index') }}" class="relative p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all group">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                            </svg>
+                            <span x-show="$store.wishlist && $store.wishlist.wishlistCount > 0" 
+                                  x-text="$store.wishlist ? $store.wishlist.wishlistCount : 0"
+                                  class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center"
+                                  x-transition:enter="transition ease-out duration-300"
+                                  x-transition:enter-start="opacity-0 scale-0"
+                                  x-transition:enter-end="opacity-100 scale-100"></span>
+                        </a>
+                    @endauth
+                    
                     <!-- Cart Icon -->
                     <a href="{{ route('cart.index') }}" class="relative p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all group">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,6 +91,81 @@
                     </a>
 
                     @auth
+                        <!-- Notifications -->
+                        @php
+                            $unreadNotifications = auth()->user()->unreadNotifications()->count();
+                        @endphp
+                        <div class="relative z-50" x-data="{ open: false }">
+                            <button @click="open = !open" class="relative p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                                </svg>
+                                @if($unreadNotifications > 0)
+                                    <span class="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">{{ $unreadNotifications }}</span>
+                                @endif
+                            </button>
+                            
+                            <!-- Notifications Dropdown -->
+                            <div x-show="open" 
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 transform scale-95"
+                                 x-transition:enter-end="opacity-100 transform scale-100"
+                                 x-transition:leave="transition ease-in duration-150"
+                                 x-transition:leave-start="opacity-100 transform scale-100"
+                                 x-transition:leave-end="opacity-0 transform scale-95"
+                                 @click.away="open = false"
+                                 x-cloak
+                                 class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-2xl border border-gray-200 z-[100] max-h-96 overflow-y-auto"
+                                 style="display: none;">
+                                <div class="p-4 border-b border-gray-200">
+                                    <h3 class="font-semibold text-gray-900">Notifications</h3>
+                                </div>
+                                <div class="divide-y divide-gray-200">
+                                    @forelse(auth()->user()->notifications()->latest()->take(10)->get() as $notification)
+                                        <a href="{{ $notification->data['url'] ?? '#' }}" 
+                                           class="block p-4 hover:bg-gray-50 transition-colors {{ $notification->read_at ? '' : 'bg-blue-50' }}"
+                                           @if($notification->read_at === null) onclick="fetch('{{ route('notifications.read', $notification->id) }}', {method: 'POST', headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'}})" @endif>
+                                            <div class="flex items-start space-x-3">
+                                                <div class="flex-shrink-0">
+                                                    @if($notification->data['type'] === 'order_status_changed')
+                                                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                            </svg>
+                                                        </div>
+                                                    @else
+                                                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                            </svg>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-sm font-medium text-gray-900">{{ $notification->data['message'] ?? 'New notification' }}</p>
+                                                    <p class="text-xs text-gray-500 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                                                </div>
+                                                @if($notification->read_at === null)
+                                                    <div class="flex-shrink-0">
+                                                        <span class="w-2 h-2 bg-blue-600 rounded-full block"></span>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </a>
+                                    @empty
+                                        <div class="p-8 text-center text-gray-500">
+                                            <p>No notifications</p>
+                                        </div>
+                                    @endforelse
+                                </div>
+                                @if(auth()->user()->notifications()->count() > 10)
+                                    <div class="p-4 border-t border-gray-200 text-center">
+                                        <a href="{{ route('notifications.index') }}" class="text-sm text-blue-600 hover:text-blue-700 font-medium">View all notifications</a>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                        
                         <div class="flex items-center space-x-2">
                             <span class="text-sm font-medium text-gray-700">{{ auth()->user()->name }}</span>
                             <form method="POST" action="{{ route('logout') }}" class="inline">
@@ -113,21 +203,35 @@
             </div>
 
             <!-- Category Navigation -->
-            <div class="hidden md:flex items-center space-x-1 border-t border-gray-200 py-2">
-                <a href="{{ route('home') }}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors {{ request()->routeIs('home') ? 'text-blue-600 bg-blue-50' : '' }}">
+            <div class="hidden md:flex items-center space-x-1 border-t border-gray-200 py-2 overflow-x-auto">
+                <a href="{{ route('home') }}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors whitespace-nowrap {{ request()->routeIs('home') ? 'text-blue-600 bg-blue-50' : '' }}">
                     Home
                 </a>
-                <a href="{{ route('products.index') }}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors {{ request()->routeIs('products.*') ? 'text-blue-600 bg-blue-50' : '' }}">
+                @if(isset($headerCategories) && $headerCategories->count() > 0)
+                    @foreach($headerCategories as $category)
+                        <a href="{{ route('products.index', ['category' => $category->id]) }}" 
+                           class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors whitespace-nowrap {{ request('category') == $category->id ? 'text-blue-600 bg-blue-50' : '' }}">
+                            {{ $category->name }}
+                        </a>
+                    @endforeach
+                @endif
+                <a href="{{ route('products.index') }}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors whitespace-nowrap {{ request()->routeIs('products.*') && !request('category') ? 'text-blue-600 bg-blue-50' : '' }}">
                     All Products
                 </a>
                 @auth
-                    <a href="{{ route('orders.index') }}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors {{ request()->routeIs('orders.*') ? 'text-blue-600 bg-blue-50' : '' }}">
+                    <a href="{{ route('wishlist.index') }}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors whitespace-nowrap {{ request()->routeIs('wishlist.*') ? 'text-red-600 bg-red-50' : '' }}">
+                        Wishlist
+                    </a>
+                    <a href="{{ route('orders.index') }}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors whitespace-nowrap {{ request()->routeIs('orders.*') ? 'text-blue-600 bg-blue-50' : '' }}">
                         My Orders
                     </a>
                 @endauth
             </div>
         </div>
     </nav>
+
+    <!-- Login Modal -->
+    @include('components.login-modal')
 
     <!-- Notifications -->
     <div class="fixed top-24 right-4 z-50 space-y-2" x-show="notifications.length > 0" style="display: none;">

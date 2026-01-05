@@ -26,10 +26,12 @@
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Search</label>
                         <div class="relative">
-                            <input type="text" name="search" value="{{ request('search') }}" 
-                                   class="form-input pl-10" 
+                            <input type="text" 
+                                   name="search" 
+                                   value="{{ request('search') }}" 
+                                   class="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400" 
                                    placeholder="Search products...">
-                            <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
                         </div>
@@ -39,7 +41,7 @@
                     @if($categories->count() > 0)
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Category</label>
-                        <select name="category" class="form-input">
+                        <select name="category" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white">
                             <option value="">All Categories</option>
                             @foreach($categories as $category)
                                 <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
@@ -60,13 +62,17 @@
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Price Range</label>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <input type="number" name="min_price" value="{{ request('min_price') }}" 
-                                       class="form-input" 
+                                <input type="number" 
+                                       name="min_price" 
+                                       value="{{ request('min_price') }}" 
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400" 
                                        placeholder="Min">
                             </div>
                             <div>
-                                <input type="number" name="max_price" value="{{ request('max_price') }}" 
-                                       class="form-input" 
+                                <input type="number" 
+                                       name="max_price" 
+                                       value="{{ request('max_price') }}" 
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400" 
                                        placeholder="Max">
                             </div>
                         </div>
@@ -84,7 +90,7 @@
                     <!-- Sort -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Sort By</label>
-                        <select name="sort" class="form-input">
+                        <select name="sort" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white">
                             <option value="latest" {{ request('sort') == 'latest' ? 'selected' : '' }}>Latest</option>
                             <option value="price_low" {{ request('sort') == 'price_low' ? 'selected' : '' }}>Price: Low to High</option>
                             <option value="price_high" {{ request('sort') == 'price_high' ? 'selected' : '' }}>Price: High to Low</option>

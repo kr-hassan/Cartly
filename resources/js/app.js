@@ -300,6 +300,196 @@ Alpine.data('checkoutCoupon', (subtotal, validateUrl, shippingUrl) => ({
     }
 }));
 
+// Wishlist functionality - Alpine Store
+Alpine.store('wishlist', {
+    wishlistCount: 0,
+    wishlistItems: new Set(), // Track product IDs in wishlist
+    loading: false,
+    wishlistCountLoaded: false,
+
+    init() {
+        // Load wishlist count and items
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.updateWishlistCount();
+            });
+        } else {
+            if ('requestIdleCallback' in window) {
+                requestIdleCallback(() => {
+                    this.updateWishlistCount();
+                }, { timeout: 2000 });
+            } else {
+                setTimeout(() => {
+                    this.updateWishlistCount();
+                }, 100);
+            }
+        }
+    },
+
+    async updateWishlistCount(force = false) {
+        if (this.wishlistCountLoaded && !force) return;
+        
+        try {
+            const response = await fetch('/wishlist/count', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            const data = await response.json();
+            this.wishlistCount = data.count || 0;
+            this.wishlistCountLoaded = true;
+        } catch (error) {
+            console.error('Error updating wishlist count:', error);
+            this.wishlistCountLoaded = true;
+        }
+    },
+
+    async toggleWishlist(productId, event = null) {
+        if (event) {
+            event.stopPropagation();
+        }
+
+        this.loading = true;
+
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]');
+            if (!csrfToken) {
+                throw new Error('CSRF token not found');
+            }
+
+            const inWishlist = this.wishlistItems.has(productId);
+
+            const url = inWishlist 
+                ? `/wishlist/${productId}`
+                : '/wishlist';
+            
+            const method = inWishlist ? 'DELETE' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken.content,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ product_id: productId })
+            });
+
+            // Check if response is not OK
+            if (!response.ok) {
+                // 401 = Unauthorized, 419 = CSRF token expired (session expired)
+                if (response.status === 401 || response.status === 419) {
+                    window.dispatchEvent(new CustomEvent('open-login-modal'));
+                    this.loading = false;
+                    return Promise.reject(new Error('Session expired. Please login again.'));
+                }
+                
+                // For other errors, try to parse JSON for error message
+                try {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Request failed');
+                } catch (e) {
+                    throw new Error('Request failed. Please try again.');
+                }
+            }
+
+            const data = await response.json();
+
+            if (data.requires_login) {
+                window.dispatchEvent(new CustomEvent('open-login-modal'));
+                this.loading = false;
+                return Promise.reject(new Error('User not logged in'));
+            }
+
+            if (data.success) {
+                if (inWishlist) {
+                    this.wishlistItems.delete(productId);
+                } else {
+                    this.wishlistItems.add(productId);
+                }
+                this.wishlistCount = data.wishlist_count || this.wishlistCount;
+                
+                // Show notification
+                if (window.Alpine && window.Alpine.store && window.Alpine.store('cart')) {
+                    window.Alpine.store('cart').showNotification(
+                        data.message || (inWishlist ? 'Removed from wishlist' : 'Added to wishlist'),
+                        'success'
+                    );
+                }
+                return Promise.resolve();
+            } else {
+                if (window.Alpine && window.Alpine.store && window.Alpine.store('cart')) {
+                    window.Alpine.store('cart').showNotification(
+                        data.message || 'Something went wrong',
+                        'error'
+                    );
+                }
+                return Promise.reject(new Error(data.message || 'Something went wrong'));
+            }
+        } catch (error) {
+            console.error('Wishlist error:', error);
+            
+            // If error message indicates session expired or login required, show modal
+            if (error.message && (error.message.includes('Session expired') || error.message.includes('login') || error.message.includes('Please login'))) {
+                window.dispatchEvent(new CustomEvent('open-login-modal'));
+            } else if (window.Alpine && window.Alpine.store && window.Alpine.store('cart')) {
+                window.Alpine.store('cart').showNotification(
+                    'Failed to update wishlist. Please try again.',
+                    'error'
+                );
+            }
+            return Promise.reject(error);
+        } finally {
+            this.loading = false;
+        }
+    },
+
+    async checkWishlist(productId) {
+        try {
+            const response = await fetch('/wishlist/check', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ product_id: productId })
+            });
+
+            const data = await response.json();
+            if (data.in_wishlist) {
+                this.wishlistItems.add(productId);
+            } else {
+                this.wishlistItems.delete(productId);
+            }
+        } catch (error) {
+            console.error('Error checking wishlist:', error);
+        }
+    },
+
+    isInWishlist(productId) {
+        return this.wishlistItems.has(productId);
+    }
+});
+
+// Initialize wishlist store after it's defined
+if (typeof Alpine !== 'undefined') {
+    const wishlistStore = Alpine.store('wishlist');
+    if (wishlistStore && typeof wishlistStore.init === 'function') {
+        // Call init after Alpine starts
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                wishlistStore.init();
+            });
+        } else {
+            wishlistStore.init();
+        }
+    }
+}
+
 // Banner Slider functionality
 Alpine.data('bannerSlider', (totalSlides) => ({
     currentSlide: 0,

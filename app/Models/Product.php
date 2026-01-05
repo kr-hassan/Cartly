@@ -85,6 +85,23 @@ class Product extends Model
     }
 
     /**
+     * Get the wishlist items for this product.
+     */
+    public function wishlistItems(): HasMany
+    {
+        return $this->hasMany(\App\Models\Wishlist::class);
+    }
+
+    /**
+     * Get the users who have this product in their wishlist.
+     */
+    public function wishlistedBy()
+    {
+        return $this->belongsToMany(User::class, 'wishlists')
+            ->withTimestamps();
+    }
+
+    /**
      * Get the final price (discount_price if available, else price).
      */
     public function getFinalPriceAttribute(): float

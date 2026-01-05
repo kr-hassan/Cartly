@@ -32,8 +32,20 @@
             <!-- Product Images -->
             <div class="space-y-4">
                 <div class="relative overflow-hidden rounded-2xl bg-gray-100 aspect-square">
-                    @if($product->images && count($product->images) > 0)
-                        <img src="{{ asset('storage/' . $product->images[0]) }}" 
+                    @php
+                        $productImages = $product->images;
+                        if (is_string($productImages)) {
+                            $productImages = json_decode($productImages, true);
+                        }
+                        // Clean up escaped slashes in image paths
+                        if (is_array($productImages)) {
+                            $productImages = array_map(function($img) {
+                                return str_replace('\\/', '/', $img);
+                            }, $productImages);
+                        }
+                    @endphp
+                    @if($productImages && is_array($productImages) && count($productImages) > 0)
+                        <img src="{{ asset('storage/' . $productImages[0]) }}" 
                              alt="{{ $product->name }}" 
                              id="main-image"
                              class="w-full h-full object-cover">
@@ -54,9 +66,9 @@
                     @endif
                 </div>
 
-                @if($product->images && count($product->images) > 1)
+                @if($productImages && is_array($productImages) && count($productImages) > 1)
                     <div class="grid grid-cols-4 gap-3">
-                        @foreach($product->images as $index => $image)
+                        @foreach($productImages as $index => $image)
                             <button onclick="document.getElementById('main-image').src='{{ asset('storage/' . $image) }}'" 
                                     class="aspect-square overflow-hidden rounded-lg border-2 border-transparent hover:border-blue-500 transition-colors">
                                 <img src="{{ asset('storage/' . $image) }}" alt="" class="w-full h-full object-cover">
@@ -135,6 +147,41 @@
                     </div>
                 @endif
 
+                <!-- Wishlist Button (Visible for all users) -->
+                <div class="mb-6" x-data="{ inWishlist: false, loading: false }" 
+                     x-init="@auth if ($store.wishlist) { $store.wishlist.checkWishlist({{ $product->id }}); inWishlist = $store.wishlist.isInWishlist({{ $product->id }}); } @endauth">
+                    <button @click="
+                        loading = true; 
+                        if ($store.wishlist) { 
+                            $store.wishlist.toggleWishlist({{ $product->id }}, $event).then(() => { 
+                                inWishlist = $store.wishlist.isInWishlist({{ $product->id }}); 
+                                loading = false; 
+                            }).catch((error) => { 
+                                loading = false;
+                                // If error is about login, modal will be shown by toggleWishlist
+                            }); 
+                        } else {
+                            loading = false;
+                            window.dispatchEvent(new CustomEvent('open-login-modal'));
+                        }
+                    "
+                            :disabled="loading"
+                            class="w-full py-3 px-6 rounded-lg font-semibold transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            :class="inWishlist ? 'bg-red-50 text-red-600 hover:bg-red-100 border-2 border-red-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-2 border-gray-200'">
+                        <svg x-show="!loading && inWishlist" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                        <svg x-show="!loading && !inWishlist" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                        </svg>
+                        <svg x-show="loading" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span x-text="loading ? 'Processing...' : (inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist')"></span>
+                    </button>
+                </div>
+
                 <!-- Add to Cart -->
                 @if($product->isInStock())
                     <div class="mt-auto" x-data="{ quantity: 1 }">
@@ -176,8 +223,20 @@
                 @foreach($relatedProducts as $relatedProduct)
                     <div class="product-card group cursor-pointer" onclick="window.location='{{ route('products.show', $relatedProduct->slug) }}'">
                         <div class="relative overflow-hidden rounded-t-xl bg-gray-100 aspect-square">
-                            @if($relatedProduct->images && count($relatedProduct->images) > 0)
-                                <img src="{{ asset('storage/' . $relatedProduct->images[0]) }}" 
+                            @php
+                                $relatedImages = $relatedProduct->images;
+                                if (is_string($relatedImages)) {
+                                    $relatedImages = json_decode($relatedImages, true);
+                                }
+                                // Clean up escaped slashes in image paths
+                                if (is_array($relatedImages)) {
+                                    $relatedImages = array_map(function($img) {
+                                        return str_replace('\\/', '/', $img);
+                                    }, $relatedImages);
+                                }
+                            @endphp
+                            @if($relatedImages && is_array($relatedImages) && count($relatedImages) > 0)
+                                <img src="{{ asset('storage/' . $relatedImages[0]) }}" 
                                      alt="{{ $relatedProduct->name }}" 
                                      class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                             @else

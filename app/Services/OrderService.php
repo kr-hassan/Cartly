@@ -8,8 +8,12 @@ use App\Models\OrderStatusHistory;
 use App\Models\Coupon;
 use App\Models\ShippingSetting;
 use App\Models\TaxSetting;
+use App\Models\User;
+use App\Notifications\OrderPlacedNotification;
+use App\Notifications\OrderStatusChangedNotification;
 use App\Services\CartService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 
 class OrderService
@@ -135,6 +139,17 @@ class OrderService
 
             DB::commit();
 
+            // Send notification to all admin users
+            try {
+                $adminUsers = User::where('role', 'admin')->get();
+                foreach ($adminUsers as $admin) {
+                    $admin->notify(new OrderPlacedNotification($order));
+                }
+            } catch (\Exception $e) {
+                // Log error but don't fail the order
+                \Log::error('Failed to send order placed notification: ' . $e->getMessage());
+            }
+
             return $order->load('items.product');
 
         } catch (\Exception $e) {
@@ -179,6 +194,25 @@ class OrderService
             }
 
             DB::commit();
+
+            // Send notification to customer when status changes
+            try {
+                // Get customer (user or guest)
+                $customer = $order->user;
+                $customerEmail = $order->customer_email;
+
+                // If customer is a registered user, send notification
+                if ($customer) {
+                    $customer->notify(new OrderStatusChangedNotification($order, $oldStatus, $status));
+                } elseif ($customerEmail) {
+                    // For guest users, send email notification only
+                    Notification::route('mail', $customerEmail)
+                        ->notify(new OrderStatusChangedNotification($order, $oldStatus, $status));
+                }
+            } catch (\Exception $e) {
+                // Log error but don't fail the status update
+                \Log::error('Failed to send order status change notification: ' . $e->getMessage());
+            }
 
             return $order->fresh();
 
