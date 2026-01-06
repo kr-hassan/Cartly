@@ -63,4 +63,46 @@ class OrderController extends Controller
                 ->with('error', 'Order not found.');
         }
     }
+
+    /**
+     * Cancel a pending order.
+     */
+    public function cancel($orderNumber)
+    {
+        try {
+            $user = auth()->user();
+            
+            if (!$user) {
+                return redirect()->route('login')
+                    ->with('error', 'Please login to cancel your order.');
+            }
+
+            $order = $this->orderService->getOrderByNumber($orderNumber);
+
+            // Check authorization (user must own the order)
+            if ($order->user_id !== $user->id) {
+                abort(403, 'Unauthorized.');
+            }
+
+            // Only pending orders can be cancelled
+            if ($order->status !== 'pending') {
+                return redirect()->route('orders.show', $order->order_number)
+                    ->with('error', 'Only pending orders can be cancelled.');
+            }
+
+            // Cancel the order
+            $this->orderService->updateOrderStatus(
+                $order,
+                'cancelled',
+                'Order cancelled by customer',
+                $user
+            );
+
+            return redirect()->route('orders.show', $order->order_number)
+                ->with('success', 'Order has been cancelled successfully.');
+        } catch (\Exception $e) {
+            return redirect()->route('orders.index')
+                ->with('error', 'Failed to cancel order: ' . $e->getMessage());
+        }
+    }
 }

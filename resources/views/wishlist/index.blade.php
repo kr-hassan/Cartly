@@ -184,3 +184,4 @@ function removeFromWishlist(wishlistId, event) {
 </script>
 @endsection
 
+

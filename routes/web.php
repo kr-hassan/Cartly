@@ -155,6 +155,7 @@ Route::post('/checkout/calculate-shipping', [CheckoutController::class, 'calcula
 // Order Routes
 Route::get('/orders', [OrderController::class, 'index'])->name('orders.index')->middleware('auth');
 Route::get('/orders/{orderNumber}', [OrderController::class, 'show'])->name('orders.show');
+Route::post('/orders/{orderNumber}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel')->middleware('auth');
 
 // Wishlist Routes
 Route::get('/wishlist', [\App\Http\Controllers\WishlistController::class, 'index'])->name('wishlist.index')->middleware('auth');

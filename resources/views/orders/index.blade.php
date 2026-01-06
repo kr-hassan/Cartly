@@ -48,13 +48,27 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <a href="{{ route('orders.show', $order->order_number) }}" 
-                                       class="text-blue-600 hover:text-blue-800 font-semibold inline-flex items-center">
-                                        View Details
-                                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                        </svg>
-                                    </a>
+                                    <div class="flex items-center space-x-3">
+                                        <a href="{{ route('orders.show', $order->order_number) }}" 
+                                           class="text-blue-600 hover:text-blue-800 font-semibold inline-flex items-center">
+                                            View Details
+                                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                            </svg>
+                                        </a>
+                                        @if($order->status === 'pending')
+                                            <form action="{{ route('orders.cancel', $order->order_number) }}" 
+                                                  method="POST" 
+                                                  class="inline"
+                                                  onsubmit="return confirm('Are you sure you want to cancel this order?');">
+                                                @csrf
+                                                <button type="submit" 
+                                                        class="text-red-600 hover:text-red-800 font-semibold inline-flex items-center">
+                                                    Cancel Order
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach

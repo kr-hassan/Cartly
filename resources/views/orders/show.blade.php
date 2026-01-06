@@ -6,16 +6,31 @@
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="bg-white rounded-lg shadow-sm p-6">
         <div class="mb-6">
-            <h1 class="text-3xl font-bold mb-2">Order #{{ $order->order_number }}</h1>
-            <p class="text-gray-600">Placed on {{ $order->created_at->format('F d, Y h:i A') }}</p>
-            <span class="inline-block mt-2 px-3 py-1 text-sm font-semibold rounded-full 
-                {{ $order->status === 'completed' ? 'bg-green-100 text-green-800' : '' }}
-                {{ $order->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : '' }}
-                {{ $order->status === 'processing' ? 'bg-blue-100 text-blue-800' : '' }}
-                {{ $order->status === 'shipped' ? 'bg-purple-100 text-purple-800' : '' }}
-                {{ $order->status === 'cancelled' ? 'bg-red-100 text-red-800' : '' }}">
-                {{ ucfirst($order->status) }}
-            </span>
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold mb-2">Order #{{ $order->order_number }}</h1>
+                    <p class="text-gray-600">Placed on {{ $order->created_at->format('F d, Y h:i A') }}</p>
+                    <span class="inline-block mt-2 px-3 py-1 text-sm font-semibold rounded-full 
+                        {{ $order->status === 'completed' ? 'bg-green-100 text-green-800' : '' }}
+                        {{ $order->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : '' }}
+                        {{ $order->status === 'processing' ? 'bg-blue-100 text-blue-800' : '' }}
+                        {{ $order->status === 'shipped' ? 'bg-purple-100 text-purple-800' : '' }}
+                        {{ $order->status === 'cancelled' ? 'bg-red-100 text-red-800' : '' }}">
+                        {{ ucfirst($order->status) }}
+                    </span>
+                </div>
+                @if($order->status === 'pending' && auth()->check() && $order->user_id === auth()->id())
+                    <form action="{{ route('orders.cancel', $order->order_number) }}" 
+                          method="POST"
+                          onsubmit="return confirm('Are you sure you want to cancel this order?');">
+                        @csrf
+                        <button type="submit" 
+                                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold">
+                            Cancel Order
+                        </button>
+                    </form>
+                @endif
+            </div>
         </div>
 
         <!-- Order Items -->
