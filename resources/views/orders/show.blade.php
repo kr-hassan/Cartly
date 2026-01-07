@@ -19,17 +19,27 @@
                         {{ ucfirst($order->status) }}
                     </span>
                 </div>
-                @if($order->status === 'pending' && auth()->check() && $order->user_id === auth()->id())
-                    <form action="{{ route('orders.cancel', $order->order_number) }}" 
-                          method="POST"
-                          onsubmit="return confirm('Are you sure you want to cancel this order?');">
-                        @csrf
-                        <button type="submit" 
-                                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold">
-                            Cancel Order
-                        </button>
-                    </form>
-                @endif
+                <div class="flex items-center space-x-3">
+                    <a href="{{ route('orders.invoice', $order->order_number) }}" 
+                       target="_blank"
+                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold inline-flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                        </svg>
+                        Print Invoice
+                    </a>
+                    @if($order->status === 'pending' && auth()->check() && $order->user_id === auth()->id())
+                        <form action="{{ route('orders.cancel', $order->order_number) }}" 
+                              method="POST"
+                              onsubmit="return confirm('Are you sure you want to cancel this order?');">
+                            @csrf
+                            <button type="submit" 
+                                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold">
+                                Cancel Order
+                            </button>
+                        </form>
+                    @endif
+                </div>
             </div>
         </div>
 
@@ -43,10 +53,10 @@
                         <div class="flex-1">
                             <h3 class="font-semibold">{{ $item->product_name }}</h3>
                             <p class="text-sm text-gray-600">Quantity: {{ $item->quantity }}</p>
-                            <p class="text-sm text-gray-600">Price: ${{ number_format($item->price, 2) }}</p>
+                            <p class="text-sm text-gray-600">Price: {{ $currency->formatAmount($item->price) }}</p>
                         </div>
                         <div class="text-right">
-                            <p class="font-semibold">${{ number_format($item->total, 2) }}</p>
+                            <p class="font-semibold">{{ $currency->formatAmount($item->total) }}</p>
                         </div>
                     </div>
                 @endforeach
@@ -76,29 +86,29 @@
             <div class="max-w-md ml-auto space-y-2">
                 <div class="flex justify-between">
                     <span>Subtotal</span>
-                    <span>${{ number_format($order->subtotal, 2) }}</span>
+                    <span>{{ $currency->formatAmount($order->subtotal) }}</span>
                 </div>
                 @if($order->discount > 0)
                     <div class="flex justify-between text-red-600">
                         <span>Discount</span>
-                        <span>-${{ number_format($order->discount, 2) }}</span>
+                        <span>-{{ $currency->formatAmount($order->discount) }}</span>
                     </div>
                 @endif
                 @if($order->shipping_cost > 0)
                     <div class="flex justify-between">
                         <span>Shipping</span>
-                        <span>${{ number_format($order->shipping_cost, 2) }}</span>
+                        <span>{{ $currency->formatAmount($order->shipping_cost) }}</span>
                     </div>
                 @endif
                 @if($order->tax > 0)
                     <div class="flex justify-between">
                         <span>Tax</span>
-                        <span>${{ number_format($order->tax, 2) }}</span>
+                        <span>{{ $currency->formatAmount($order->tax) }}</span>
                     </div>
                 @endif
                 <div class="flex justify-between font-bold text-xl border-t pt-2">
                     <span>Total</span>
-                    <span>${{ number_format($order->total, 2) }}</span>
+                    <span>{{ $currency->formatAmount($order->total) }}</span>
                 </div>
             </div>
         </div>

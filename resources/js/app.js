@@ -121,7 +121,7 @@ Alpine.data('cart', () => ({
 }));
 
 // Checkout Coupon functionality
-Alpine.data('checkoutCoupon', (subtotal, validateUrl, shippingUrl) => ({
+Alpine.data('checkoutCoupon', (subtotal, validateUrl, shippingUrl, taxRate, freeShippingThreshold, currencySymbol = '$', currencyPosition = 'before') => ({
     couponCode: '',
     discount: 0,
     couponApplied: false,
@@ -130,6 +130,10 @@ Alpine.data('checkoutCoupon', (subtotal, validateUrl, shippingUrl) => ({
     subtotal: subtotal,
     shippingCost: 0,
     shippingCalculated: false,
+    taxRate: taxRate,
+    freeShippingThreshold: freeShippingThreshold,
+    currencySymbol: currencySymbol,
+    currencyPosition: currencyPosition,
     
     init() {
         // Calculate shipping if district is already selected
@@ -297,6 +301,15 @@ Alpine.data('checkoutCoupon', (subtotal, validateUrl, shippingUrl) => ({
     
     getTaxRateDisplay() {
         return parseFloat(this.taxRate) || 0;
+    },
+    
+    formatCurrency(amount) {
+        const formatted = parseFloat(amount || 0).toFixed(2);
+        if (this.currencyPosition === 'before') {
+            return this.currencySymbol + formatted;
+        } else {
+            return formatted + ' ' + this.currencySymbol;
+        }
     }
 }));
 

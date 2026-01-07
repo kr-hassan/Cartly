@@ -185,3 +185,4 @@ function removeFromWishlist(wishlistId, event) {
 @endsection
 
 
+

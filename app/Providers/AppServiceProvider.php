@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Models\Category;
+use App\Models\CurrencySetting;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -27,6 +29,19 @@ class AppServiceProvider extends ServiceProvider
                 return Category::active()->root()->with('children')->orderBy('sort_order')->orderBy('name')->get();
             });
             $view->with('headerCategories', $categories);
+        });
+
+        // Share currency settings with all views
+        View::composer('*', function ($view) {
+            $currency = cache()->remember('currency_settings.active', 3600, function () {
+                return CurrencySetting::getActive() ?? CurrencySetting::getOrCreateSetting();
+            });
+            $view->with('currency', $currency);
+        });
+
+        // Blade directive for currency formatting
+        Blade::directive('currency', function ($expression) {
+            return "<?php echo \App\Models\CurrencySetting::format($expression); ?>";
         });
 
         // Optimize query performance

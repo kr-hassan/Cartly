@@ -98,4 +98,13 @@ class OrderController extends Controller
                 ->with('error', $e->getMessage());
         }
     }
+
+    /**
+     * Display invoice for printing.
+     */
+    public function invoice(Order $order)
+    {
+        $order->load('items.product', 'user', 'coupon');
+        return view('orders.invoice', compact('order'));
+    }
 }

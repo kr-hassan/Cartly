@@ -11,14 +11,24 @@
                     <h1 class="text-2xl font-bold">Order #{{ $order->order_number }}</h1>
                     <p class="text-gray-600">Placed on {{ $order->created_at->format('F d, Y h:i A') }}</p>
                 </div>
-                <span class="px-3 py-1 text-sm font-semibold rounded-full 
-                    {{ $order->status === 'completed' ? 'bg-green-100 text-green-800' : '' }}
-                    {{ $order->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : '' }}
-                    {{ $order->status === 'processing' ? 'bg-blue-100 text-blue-800' : '' }}
-                    {{ $order->status === 'shipped' ? 'bg-purple-100 text-purple-800' : '' }}
-                    {{ $order->status === 'cancelled' ? 'bg-red-100 text-red-800' : '' }}">
-                    {{ ucfirst($order->status) }}
-                </span>
+                <div class="flex items-center space-x-3">
+                    <a href="{{ route('admin.orders.invoice', $order) }}" 
+                       target="_blank"
+                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold inline-flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                        </svg>
+                        Print Invoice
+                    </a>
+                    <span class="px-3 py-1 text-sm font-semibold rounded-full 
+                        {{ $order->status === 'completed' ? 'bg-green-100 text-green-800' : '' }}
+                        {{ $order->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : '' }}
+                        {{ $order->status === 'processing' ? 'bg-blue-100 text-blue-800' : '' }}
+                        {{ $order->status === 'shipped' ? 'bg-purple-100 text-purple-800' : '' }}
+                        {{ $order->status === 'cancelled' ? 'bg-red-100 text-red-800' : '' }}">
+                        {{ ucfirst($order->status) }}
+                    </span>
+                </div>
             </div>
 
             <h2 class="text-xl font-bold mb-4">Order Items</h2>
@@ -27,10 +37,10 @@
                     <div class="flex justify-between border-b pb-4">
                         <div>
                             <h3 class="font-semibold">{{ $item->product_name }}</h3>
-                            <p class="text-sm text-gray-600">Qty: {{ $item->quantity }} × ${{ number_format($item->price, 2) }}</p>
+                            <p class="text-sm text-gray-600">Qty: {{ $item->quantity }} × {{ $currency->formatAmount($item->price) }}</p>
                         </div>
                         <div class="text-right font-semibold">
-                            ${{ number_format($item->total, 2) }}
+                            {{ $currency->formatAmount($item->total) }}
                         </div>
                     </div>
                 @endforeach
@@ -41,29 +51,29 @@
                     <div class="w-64 space-y-2">
                         <div class="flex justify-between">
                             <span>Subtotal:</span>
-                            <span>${{ number_format($order->subtotal, 2) }}</span>
+                            <span>{{ $currency->formatAmount($order->subtotal) }}</span>
                         </div>
                         @if($order->discount > 0)
                             <div class="flex justify-between text-red-600">
                                 <span>Discount:</span>
-                                <span>-${{ number_format($order->discount, 2) }}</span>
+                                <span>-{{ $currency->formatAmount($order->discount) }}</span>
                             </div>
                         @endif
                         @if($order->shipping_cost > 0)
                             <div class="flex justify-between">
                                 <span>Shipping:</span>
-                                <span>${{ number_format($order->shipping_cost, 2) }}</span>
+                                <span>{{ $currency->formatAmount($order->shipping_cost) }}</span>
                             </div>
                         @endif
                         @if($order->tax > 0)
                             <div class="flex justify-between">
                                 <span>Tax:</span>
-                                <span>${{ number_format($order->tax, 2) }}</span>
+                                <span>{{ $currency->formatAmount($order->tax) }}</span>
                             </div>
                         @endif
                         <div class="flex justify-between font-bold text-lg pt-2 border-t">
                             <span>Total:</span>
-                            <span>${{ number_format($order->total, 2) }}</span>
+                            <span>{{ $currency->formatAmount($order->total) }}</span>
                         </div>
                     </div>
                 </div>

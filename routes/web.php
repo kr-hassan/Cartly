@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\ShippingSettingController;
 use App\Http\Controllers\Admin\TaxSettingController;
+use App\Http\Controllers\Admin\CurrencySettingController;
 use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
@@ -155,6 +156,7 @@ Route::post('/checkout/calculate-shipping', [CheckoutController::class, 'calcula
 // Order Routes
 Route::get('/orders', [OrderController::class, 'index'])->name('orders.index')->middleware('auth');
 Route::get('/orders/{orderNumber}', [OrderController::class, 'show'])->name('orders.show');
+Route::get('/orders/{orderNumber}/invoice', [OrderController::class, 'invoice'])->name('orders.invoice');
 Route::post('/orders/{orderNumber}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel')->middleware('auth');
 
 // Wishlist Routes
@@ -190,6 +192,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Orders
     Route::get('orders', [AdminOrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
+    Route::get('orders/{order}/invoice', [AdminOrderController::class, 'invoice'])->name('orders.invoice');
     Route::put('orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.update-status');
 
     // Coupons
@@ -204,6 +207,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Tax Settings
     Route::get('tax-settings/edit', [TaxSettingController::class, 'edit'])->name('tax-settings.edit');
     Route::put('tax-settings', [TaxSettingController::class, 'update'])->name('tax-settings.update');
+    
+    // Currency Settings
+    Route::get('currency-settings/edit', [CurrencySettingController::class, 'edit'])->name('currency-settings.edit');
+    Route::put('currency-settings', [CurrencySettingController::class, 'update'])->name('currency-settings.update');
     
     // Admin Notifications Routes
     Route::post('notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');

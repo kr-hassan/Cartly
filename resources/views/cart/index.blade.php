@@ -40,7 +40,7 @@
                                         <a href="{{ route('products.show', $item->product->slug) }}" class="text-lg font-bold text-gray-900 hover:text-blue-600 transition-colors mb-2 block">
                                             {{ $item->product->name }}
                                         </a>
-                                        <p class="text-gray-600 text-sm mb-4">${{ number_format($item->price, 2) }} each</p>
+                                        <p class="text-gray-600 text-sm mb-4">{{ $currency->formatAmount($item->price) }} each</p>
                                         
                                         <!-- Quantity Control -->
                                         <div class="flex items-center space-x-4" x-data="{ quantity: {{ $item->quantity }}, updating: false }">
@@ -65,8 +65,8 @@
                                     <!-- Price & Actions -->
                                     <div class="flex flex-col items-end space-y-4">
                                         <div class="text-right">
-                                            <p class="text-2xl font-bold text-gray-900">${{ number_format($item->subtotal, 2) }}</p>
-                                            <p class="text-sm text-gray-500">${{ number_format($item->price, 2) }} × {{ $item->quantity }}</p>
+                                            <p class="text-2xl font-bold text-gray-900">{{ $currency->formatAmount($item->subtotal) }}</p>
+                                            <p class="text-sm text-gray-500">{{ $currency->formatAmount($item->price) }} × {{ $item->quantity }}</p>
                                         </div>
                                         
                                         <form action="{{ route('cart.destroy', $item->id) }}" method="POST">
@@ -95,7 +95,7 @@
                     <div class="space-y-4 mb-6">
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">Subtotal ({{ $cartTotals['total_items'] }} items)</span>
-                            <span class="font-semibold text-gray-900">${{ number_format($cartTotals['subtotal'], 2) }}</span>
+                            <span class="font-semibold text-gray-900">{{ $currency->formatAmount($cartTotals['subtotal']) }}</span>
                         </div>
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">Shipping</span>
@@ -106,7 +106,7 @@
                     <div class="border-t border-gray-200 pt-4 mb-6">
                         <div class="flex justify-between items-center">
                             <span class="text-lg font-bold text-gray-900">Total</span>
-                            <span class="text-2xl font-bold text-gray-900">${{ number_format($cartTotals['subtotal'], 2) }}</span>
+                            <span class="text-2xl font-bold text-gray-900">{{ $currency->formatAmount($cartTotals['subtotal']) }}</span>
                         </div>
                     </div>
 

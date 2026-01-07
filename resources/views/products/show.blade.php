@@ -96,14 +96,14 @@
                 <div class="mb-6">
                     @if($product->hasDiscount())
                         <div class="flex items-baseline space-x-4 mb-2">
-                            <span class="text-4xl font-bold text-gray-900">${{ number_format($product->discount_price, 2) }}</span>
-                            <span class="text-2xl text-gray-400 line-through">${{ number_format($product->price, 2) }}</span>
+                            <span class="text-4xl font-bold text-gray-900">{{ $currency->formatAmount($product->discount_price) }}</span>
+                            <span class="text-2xl text-gray-400 line-through">{{ $currency->formatAmount($product->price) }}</span>
                             <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-semibold">
-                                Save ${{ number_format($product->price - $product->discount_price, 2) }}
+                                Save {{ $currency->formatAmount($product->price - $product->discount_price) }}
                             </span>
                         </div>
                     @else
-                        <span class="text-4xl font-bold text-gray-900">${{ number_format($product->price, 2) }}</span>
+                        <span class="text-4xl font-bold text-gray-900">{{ $currency->formatAmount($product->price) }}</span>
                     @endif
                 </div>
 

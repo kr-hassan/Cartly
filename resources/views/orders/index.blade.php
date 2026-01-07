@@ -40,7 +40,7 @@
                                     {{ $order->items->sum('quantity') }} item(s)
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="text-sm font-bold text-gray-900">${{ number_format($order->total, 2) }}</span>
+                                    <span class="text-sm font-bold text-gray-900">{{ $currency->formatAmount($order->total) }}</span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="badge {{ $order->status === 'completed' ? 'badge-success' : ($order->status === 'pending' ? 'badge-warning' : ($order->status === 'processing' ? 'badge-info' : ($order->status === 'shipped' ? 'badge-info' : 'badge-danger'))) }}">

@@ -105,4 +105,30 @@ class OrderController extends Controller
                 ->with('error', 'Failed to cancel order: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Display invoice for printing.
+     */
+    public function invoice($orderNumber)
+    {
+        try {
+            $order = $this->orderService->getOrderByNumber($orderNumber);
+
+            // Check authorization (user must own the order or be admin)
+            $user = auth()->user();
+            if (!$user || (!$user->isAdmin() && $order->user_id !== $user->id)) {
+                // For guest orders, check if order number matches (simple security)
+                if (!$user && $order->user_id === null) {
+                    // Allow guest to view their order
+                } else {
+                    abort(403, 'Unauthorized.');
+                }
+            }
+
+            return view('orders.invoice', compact('order'));
+        } catch (\Exception $e) {
+            return redirect()->route('orders.index')
+                ->with('error', 'Order not found.');
+        }
+    }
 }
